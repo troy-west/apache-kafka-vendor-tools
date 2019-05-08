@@ -1,0 +1,7 @@
+version: '2.2'
+services:
+  ksql:
+    image: confluentinc/cp-ksql-server:5.2.1
+    command: ksql http://ksql-server:8088
+    stdin_open: true
+    tty: true
