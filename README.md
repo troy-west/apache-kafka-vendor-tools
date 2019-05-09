@@ -45,7 +45,7 @@ docker-compose -f docker-compose.tools.yml run kafka-tools
 docker-compose -f docker-compose.ksql.yml run ksql
 ```
 
-You should see the following appear:
+You should see the following:
 
 ```
                   ===========================================
