@@ -262,6 +262,8 @@ CREATE TABLE radio_log_count
         GROUP BY type, name;
 ```
 
+Creating a table with "AS SELECT" and "KAFKA_TOPIC" will allow us to send the table to a topic.
+
 17. Now, list the topics managed by kafka:
 
 ```ksql
