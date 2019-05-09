@@ -27,7 +27,7 @@ from where you can interact with the Kafka brokers:
 docker-compose -f docker-compose.tools.yml run kafka-tools
 ```
 
-3. Create two new topics "users" and "logins" and populate them with data:
+3. Create two new topics "users" and "logins":
 
 ```sh
 ./bin/kafka-topics.sh --bootstrap-server kafka-1:19092 --create --topic users --partitions 12 --replication-factor 3
