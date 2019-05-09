@@ -288,7 +288,9 @@ Also notice that a default value has been assigned to the partition count.
 18. From the kafka-tools cli, start Kafka Connect in the background:
 
 ```sh
-./bin/connect-standalone.sh /root/data/connect-standalone.properties /root/data/connect-file-sink-csv.properties &> kafka-connect-logs.txt &
+./bin/connect-standalone.sh \
+   /root/data/connect-standalone.properties \
+   /root/data/connect-file-sink-csv.properties &> kafka-connect-logs.txt &
 ```
 
 19. A new file "radio_log_count.csv" should be created and populated with the results of our "radio_log_count" table. Run the following to view its content:
