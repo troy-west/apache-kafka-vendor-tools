@@ -37,7 +37,7 @@ docker-compose -f docker-compose.tools.yml run kafka-tools
 
 4. Populate the "radio-logs" topic by using the code from the coding section of the Apache Kafka workshop.
 
-## Starting KSQL and querying Kafka topics via tables and streams
+## Starting KSQL and querying Kafka topics via streams
 
 5. In a new terminal, start the KSQL CLI tool:
 
