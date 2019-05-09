@@ -29,13 +29,13 @@ from where you can interact with the Kafka brokers:
 docker-compose -f docker-compose.tools.yml run kafka-tools
 ```
 
-3. Create a new topic "radio-logs" with the following command:
+3. Create a new topic *radio-logs* with the following command:
 
 ```sh
 ./bin/kafka-topics.sh --bootstrap-server kafka-1:19092 --create --topic radio-logs --partitions 12 --replication-factor 3
 ```
 
-4. Populate the "radio-logs" topic by using the code from the coding section of the Apache Kafka workshop.
+4. Populate the *radio-logs* topic by using the code from the coding section of the Apache Kafka workshop.
 
 ## Starting KSQL and querying Kafka topics via tables and streams
 
@@ -84,7 +84,7 @@ You will see something like the following:
 -----------------------------------------------------------------------------------------
 ```
 
-7. View the messsages on the "radio-logs" topic:
+7. View the messsages on the *radio-logs* topic:
 
 ```ksql
 print 'radio-logs' from beginning LIMIT 10;
@@ -108,7 +108,7 @@ Format:JSON
 
 Hit Ctrl+c to get back to the prompt.
 
-8. Create a KSQL stream around the "radio-logins" topic:
+8. Create a KSQL stream around the *radio-logins* topic:
 
 ```ksql
 CREATE STREAM radio_logs (time BIGINT, type VARCHAR, name VARCHAR, long VARCHAR, lat VARCHAR, content ARRAY<VARCHAR>)
@@ -130,7 +130,7 @@ You should see the following:
 ------------------------------------
 ```
 
-10. View the details of the "radio_logs" stream:
+10. View the details of the *radio_logs* stream:
 
 ```ksql
 describe radio_logs;
@@ -153,14 +153,14 @@ Name                 : RADIO_LOGS
 -------------------------------------
 ```
 
-11. View the content in the "radio_logs" stream, beginning with the earliest entry. The query can take a little time to return the initial results:
+11. View the content in the *radio_logs* stream, beginning with the earliest entry. The query can take a little time to return the initial results:
 
 ```ksql
 SET 'auto.offset.reset' = 'earliest';
 SELECT * from radio_logs LIMIT 10;
 ```
 
-The "earliest" setting tells KSQL that every query in this KSQL session should begin from the earliest offset on each topic, table, and stream.
+The *earliest* setting tells KSQL that every query in this KSQL session should begin from the earliest offset on each topic, table, and stream.
 
 You should see something like the following:
 
@@ -262,7 +262,7 @@ CREATE TABLE radio_log_count
         GROUP BY type, name;
 ```
 
-Creating a table with "AS SELECT" and "KAFKA_TOPIC" will allow us to send the table to a topic.
+Creating a table with *AS SELECT* and *KAFKA_TOPIC* will allow us to send the table to a topic.
 
 17. Now, list the topics managed by kafka:
 
@@ -270,7 +270,7 @@ Creating a table with "AS SELECT" and "KAFKA_TOPIC" will allow us to send the ta
 list topics;
 ```
 
-You should see the following. Notice the "radio_log_count" topic that has been created:
+You should see the following. Notice the *radio_log_count* topic that has been created:
 
 ```
  Kafka Topic     | Registered | Partitions | Partition Replicas | Consumers | ConsumerGroups
@@ -293,7 +293,7 @@ Also notice that a default value has been assigned to the partition count.
    /root/data/connect-file-sink-csv.properties &> kafka-connect-logs.txt &
 ```
 
-19. A new file "radio_log_count.csv" should be created and populated with the results of our "radio_log_count" table. Run the following to view its content:
+19. A new file *radio_log_count.csv* should be created and populated with the results of our *radio_log_count* table. Run the following to view its content:
 
 ```
 cat radio_log_count.csv
