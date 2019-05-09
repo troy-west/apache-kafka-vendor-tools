@@ -27,50 +27,18 @@ from where you can interact with the Kafka brokers:
 docker-compose -f docker-compose.tools.yml run kafka-tools
 ```
 
-3. Create two new topics "users" and "logins":
+3. Create a new topic "radio-logs" with the following command:
 
 ```sh
-./bin/kafka-topics.sh --bootstrap-server kafka-1:19092 --create --topic users --partitions 12 --replication-factor 3
-./bin/kafka-topics.sh --bootstrap-server kafka-1:19092 --create --topic logins --partitions 12 --replication-factor 3
+./bin/kafka-topics.sh --bootstrap-server kafka-1:19092 --create --topic radio-logs --partitions 12 --replication-factor 3
 ```
 
-4. Populate the "users" topic by using the kafka-console-producer:
-
-```sh
-./bin/kafka-console-producer.sh --broker-list kafka-1:19092 --topic users --property "parse.key=true" --property "key.separator=:"
-```
-
-Copy the following data into the terminal, and then press Ctrl+d to exit back to the shell:
-
-```
-1:{"id":1, "name":"Jane Doe"}
-2:{"id":2, "name":"John Smith"}
-3:{"id":3, "name":"Mr. Meeseeks"}
-```
+4. Populate the "radio-logs" topic by using the code from the streaming compute section in the Apache Kafka workshop.
 
 5. Populate the "logins" topic by using the kafka-console-producer:
 
 ```sh
 ./bin/kafka-console-producer.sh --broker-list kafka-1:19092 --topic logins --property "parse.key=true" --property "key.separator=:"
-```
-
-Copy the following data into the terminal, and then press Ctrl+d to exit back to the shell:
-
-```
-1:{"time": 1000, "user_id": 1}
-2:{"time": 2000, "user_id": 2}
-3:{"time": 3000, "user_id": 3}
-2:{"time": 4000, "user_id": 2}
-2:{"time": 5000, "user_id": 2}
-3:{"time": 6000, "user_id": 3}
-3:{"time": 7000, "user_id": 3}
-3:{"time": 8000, "user_id": 3}
-1:{"time": 9000, "user_id": 1}
-1:{"time": 10000, "user_id": 1}
-1:{"time": 11000, "user_id": 1}
-2:{"time": 12000, "user_id": 2}
-2:{"time": 13000, "user_id": 2}
-1:{"time": 14000, "user_id": 1}
 ```
 
 ## Starting KSQL and querying Kafka topics via tables and streams
@@ -93,82 +61,40 @@ You will see something like the following:
  Kafka Topic | Registered | Partitions | Partition Replicas | Consumers | ConsumerGroups
 -----------------------------------------------------------------------------------------
  _schemas    | false      | 1          | 3                  | 0         | 0
- logins      | false      | 12         | 3                  | 0         | 0
- users       | false      | 12         | 3                  | 0         | 0
+ radio-logs  | false      | 12         | 3                  | 0         | 0
 -----------------------------------------------------------------------------------------
 ```
 
-8. View the messsages on the "users" topic, then hit Ctrl+C to get back to the prompt:
+8. View the messsages on the "radio-logs" topic, then hit Ctrl+C to get back to the prompt:
 
 ```ksql
-print 'users' from beginning;
+print 'radio-logs' from beginning LIMIT 10;
 ```
 
 You will see something like the following:
 
 ```
 Format:JSON
-{"ROWTIME":1557373993878,"ROWKEY":"1","id":1,"name":"Jane Doe","time":0}
-{"ROWTIME":1557373993897,"ROWKEY":"2","id":2,"name":"John Smith","time":0}
-{"ROWTIME":1557373993900,"ROWKEY":"3","id":3,"name":"Mr. Meeseeks","time":0}
+{"ROWTIME":1557380525600,"ROWKEY":"353","time":1557125670796,"type":"MOR","name":"353","long":41,"lat":13,"content":[".----"]}
+{"ROWTIME":1557380525604,"ROWKEY":"353","time":1557125670821,"type":"MOR","name":"353","long":41,"lat":13,"content":[".----"]}
+{"ROWTIME":1557380525605,"ROWKEY":"353","time":1557125670846,"type":"MOR","name":"353","long":41,"lat":13,"content":[".----"]}
+{"ROWTIME":1557380525607,"ROWKEY":"095","time":1557125670915,"type":"MOR","name":"095","long":-87,"lat":-29,"content":[".----"]}
+{"ROWTIME":1557380525608,"ROWKEY":"095","time":1557125670940,"type":"MOR","name":"095","long":-87,"lat":-29,"content":[".----"]}
+{"ROWTIME":1557380525609,"ROWKEY":"095","time":1557125670965,"type":"MOR","name":"095","long":-87,"lat":-29,"content":[".----"]}
+{"ROWTIME":1557380525612,"ROWKEY":"032","time":1557125671068,"type":"MOR","name":"032","long":-119,"lat":-39,"content":[".----"]}
+{"ROWTIME":1557380525613,"ROWKEY":"032","time":1557125671093,"type":"MOR","name":"032","long":-119,"lat":-39,"content":[".----"]}
+{"ROWTIME":1557380525615,"ROWKEY":"032","time":1557125671118,"type":"MOR","name":"032","long":-119,"lat":-39,"content":[".----"]}
+{"ROWTIME":1557380525616,"ROWKEY":"122","time":1557125671157,"type":"MOR","name":"122","long":-74,"lat":-24,"content":[".----"]}
 ```
 
-9. View the messages on the "logins" topic, then hit Ctrl+C to get back to the prompt:
+11. Create a KSQL stream around the "radio-logins" topic:
 
 ```ksql
-print 'logins' from beginning;
+CREATE STREAM radio_logs (time BIGINT, type VARCHAR, name VARCHAR, long VARCHAR, lat VARCHAR, content ARRAY<VARCHAR>)
+  WITH (KAFKA_TOPIC='radio-logs', VALUE_FORMAT='JSON', KEY='name', TIMESTAMP='time');
 ```
 
-You will see something like the following:
-
-```
-Format:JSON
-{"ROWTIME":1557364037528,"ROWKEY":"3","time":3000,"user_id":3}
-{"ROWTIME":1557364037533,"ROWKEY":"3","time":6000,"user_id":3}
-{"ROWTIME":1557364037533,"ROWKEY":"3","time":7000,"user_id":3}
-{"ROWTIME":1557364037534,"ROWKEY":"3","time":8000,"user_id":3}
-{"ROWTIME":1557364037527,"ROWKEY":"2","time":2000,"user_id":2}
-{"ROWTIME":1557364037533,"ROWKEY":"2","time":4000,"user_id":2}
-{"ROWTIME":1557364037533,"ROWKEY":"2","time":5000,"user_id":2}
-{"ROWTIME":1557364037535,"ROWKEY":"2","time":12000,"user_id":2}
-{"ROWTIME":1557364037535,"ROWKEY":"2","time":13000,"user_id":2}
-{"ROWTIME":1557364037510,"ROWKEY":"1","time":1000,"user_id":1}
-{"ROWTIME":1557364037534,"ROWKEY":"1","time":9000,"user_id":1}
-{"ROWTIME":1557364037534,"ROWKEY":"1","time":10000,"user_id":1}
-{"ROWTIME":1557364037534,"ROWKEY":"1","time":11000,"user_id":1}
-{"ROWTIME":1557364037535,"ROWKEY":"1","time":14000,"user_id":1}
-```
-
-10. Create a KSQL table around the "users" topic:
-
-```ksql
-CREATE TABLE users_by_id (id BIGINT, name VARCHAR)
-  WITH (KAFKA_TOPIC='users', VALUE_FORMAT='JSON', KEY='id');
-```
-
-11. Create a KSQL stream around the "logins" topic":
-
-```ksql
-CREATE STREAM logins_by_id (time BIGINT, user_id VARCHAR)
-  WITH (KAFKA_TOPIC='logins', VALUE_FORMAT='JSON', KEY='user_id', TIMESTAMP='time');
-```
-
-12. List the existing KSQL tables:
-
-```ksql
-show tables;
-```
-
-You should see the following:
-
-```
-Table Name  | Kafka Topic | Format | Windowed
------------------------------------------------
-USERS_BY_ID | users       | JSON   | false
------------------------------------------------
-```
-
-13. List the existing KSQL streams:
+12. List the existing KSQL streams:
 
 ```ksql
 show streams;
@@ -177,55 +103,40 @@ show streams;
 You should see the following:
 
 ```
- Stream Name  | Kafka Topic | Format
--------------------------------------
- LOGINS_BY_ID | logins      | JSON
--------------------------------------
+ Stream Name | Kafka Topic | Format
+------------------------------------
+ RADIO_LOGS  | radio-logs  | JSON
+------------------------------------
 ```
 
 14. View the details of the "users_by_id" table:
 
 ```ksql
-describe users_by_id;
+describe radio_logs;
 ```
 
 You should see the following:
 
 ```
-Name                 : USERS_BY_ID
- Field   | Type
--------------------------------------
- ROWTIME | BIGINT           (system)
- ROWKEY  | VARCHAR(STRING)  (system)
- ID      | BIGINT
- NAME    | VARCHAR(STRING)
--------------------------------------
-```
-
-15. View the details of the "logins_by_id" table:
-
-```ksql
-describe logins_by_id;
-```
-
-You should see the following:
-
-```
-Name                 : LOGINS_BY_ID
+Name                 : RADIO_LOGS
  Field   | Type
 -------------------------------------
  ROWTIME | BIGINT           (system)
  ROWKEY  | VARCHAR(STRING)  (system)
  TIME    | BIGINT
- USER_ID | VARCHAR(STRING)
+ TYPE    | VARCHAR(STRING)
+ NAME    | VARCHAR(STRING)
+ LONG    | VARCHAR(STRING)
+ LAT     | VARCHAR(STRING)
+ CONTENT | ARRAY<VARCHAR(STRING)>
 -------------------------------------
 ```
 
-16. View the content in the "user_by_id" table, beginning with the earliest entry. The query can take a little time to return the initial results:
+16. View the content in the "radio_logs" stream, beginning with the earliest entry. The query can take a little time to return the initial results:
 
 ```ksql
 SET 'auto.offset.reset' = 'earliest';
-SELECT * from users_by_id;
+SELECT * from radio_logs LIMIT 10;
 ```
 
 The "earliest" setting tells KSQL that every query in this KSQL session should begin from the earliest
@@ -234,96 +145,96 @@ offset on each topic, table, and stream.
 You should see something like the following:
 
 ```
-1557375171795 | 2 | 2 | John Smith
-1557375171778 | 1 | 1 | Jane Doe
-1557375171796 | 3 | 3 | Mr. Meeseeks
+1557125670921 | 040 | 1557125670921 | GER | 040 | -115 | -38 | [eins]
+1557125671114 | 485 | 1557125671114 | MOR | 485 | 107 | 35 | [.----]
+1557125670806 | 344 | 1557125670806 | MOR | 344 | 37 | 12 | [.----]
+1557125670781 | 185 | 1557125670781 | MOR | 185 | -42 | -14 | [.----]
+1557125670946 | 040 | 1557125670946 | GER | 040 | -115 | -38 | [eins]
+1557125670971 | 040 | 1557125670971 | GER | 040 | -115 | -38 | [eins]
+1557125671223 | 502 | 1557125671223 | GER | 502 | 116 | 38 | [eins]
+1557125671248 | 502 | 1557125671248 | GER | 502 | 116 | 38 | [eins]
+1557125671273 | 502 | 1557125671273 | GER | 502 | 116 | 38 | [eins]
+1557125671868 | 477 | 1557125671868 | ENG | 477 | 103 | 34 | [one]
 ```
 
 Press Ctrl+c to exit the query.
 
-17. View the content in the "logins_by_id" stream, beginning with the earliest entry. The query can take a little time to return the initial results:
+17. Now, let's search for a specific entry in "radio_logs":
 
 ```ksql
-SELECT * from logins_by_id;
+SELECT * FROM radio_logs WHERE type='ENG' and name='324' LIMIT 10;
+```
+
+We should get multiple results, as follows:
+
+```
+1557125672954 | 324 | 1557125672954 | ENG | 324 | 27 | 9 | [one]
+1557125672979 | 324 | 1557125672979 | ENG | 324 | 27 | 9 | [one]
+1557125673004 | 324 | 1557125673004 | ENG | 324 | 27 | 9 | [one]
+1557125680792 | 324 | 1557125680792 | ENG | 324 | 27 | 9 | [one]
+1557125680817 | 324 | 1557125680817 | ENG | 324 | 27 | 9 | [one]
+1557125680842 | 324 | 1557125680842 | ENG | 324 | 27 | 9 | [one]
+1557125695496 | 324 | 1557125695496 | ENG | 324 | 27 | 9 | [one]
+1557125695521 | 324 | 1557125695521 | ENG | 324 | 27 | 9 | [one]
+1557125695546 | 324 | 1557125695546 | ENG | 324 | 27 | 9 | [one]
+1557125705652 | 324 | 1557125705652 | ENG | 324 | 27 | 9 | [one]
+Limit Reached
+```
+
+18. Now, limit the query to only those with content having at least 3 items:
+
+```ksql
+select * from radio_logs WHERE content[2] IS NOT NULL limit 10;
 ```
 
 You should see something like the following:
 
 ```
-2000 | 2 | 2000 | 2
-4000 | 2 | 4000 | 2
-5000 | 2 | 5000 | 2
-12000 | 2 | 12000 | 2
-13000 | 2 | 13000 | 2
-3000 | 3 | 3000 | 3
-6000 | 3 | 6000 | 3
-7000 | 3 | 7000 | 3
-8000 | 3 | 8000 | 3
-1000 | 1 | 1000 | 1
-9000 | 1 | 9000 | 1
-10000 | 1 | 10000 | 1
-11000 | 1 | 11000 | 1
-14000 | 1 | 14000 | 1
+1557126942198 | 423 | 1557126942198 | ENG | 423 | 76 | 25 | [one, three, six]
+1557126942223 | 423 | 1557126942223 | ENG | 423 | 76 | 25 | [one, three, nine]
+1557126942248 | 423 | 1557126942248 | ENG | 423 | 76 | 25 | [one, two, seven]
+1557126957782 | 423 | 1557126957782 | ENG | 423 | 76 | 25 | [one, five, nine]
+1557126957807 | 423 | 1557126957807 | ENG | 423 | 76 | 25 | [one, six, three]
+1557126957832 | 423 | 1557126957832 | ENG | 423 | 76 | 25 | [one, four, nine]
+1557126965396 | 423 | 1557126965396 | ENG | 423 | 76 | 25 | [one, five, eight]
+1557126965421 | 423 | 1557126965421 | ENG | 423 | 76 | 25 | [one, six, two]
+1557126965446 | 423 | 1557126965446 | ENG | 423 | 76 | 25 | [one, four, eight]
+1557126971643 | 423 | 1557126971643 | ENG | 423 | 76 | 25 | [one, three, five]
+Limit Reached
 ```
 
-Press Ctrl+c to exit the query.
-
-18. Now, join the "users_by_id" table with the "logins_by_id" stream, to see which users are logging in over time:
+19. Count how many messages each radio station is sending each minute:
 
 ```ksql
-SELECT logins_by_id.time, user_id, name FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id;
-```
-
-You should see something like the following:
-
-```
-3000 | 3 | null
-6000 | 3 | null
-7000 | 3 | null
-8000 | 3 | null
-1000 | 1 | Jane Doe
-9000 | 1 | Jane Doe
-10000 | 1 | Jane Doe
-11000 | 1 | Jane Doe
-14000 | 1 | Jane Doe
-2000 | 2 | null
-4000 | 2 | null
-5000 | 2 | null
-12000 | 2 | null
-13000 | 2 | null
-```
-
-The "null" values are an indication that "users_by_id" table wasn't fully populated at the time of the join.
-Work around this issue by starting the query before populating any of the topics.
-
-19. See how many times users are logging in within a time window:
-
-```ksql
-SELECT CAST(windowStart() AS BIGINT), user_id, name, count(*)
-    FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id
+SELECT CAST(windowStart() AS BIGINT), type, name, count(*)
+    FROM radio_logs
     WINDOW TUMBLING (SIZE 1 MINUTE)
-    GROUP BY user_id, name;
+    GROUP BY type, name;
 ```
 
 You may see something like the following:
 
 ```
-0 | 1 | Jane Doe | 5
-0 | 2 | John Smith | 5
-0 | 3 | null | 4
+1557126840000 | MOR | 470 | 18
+1557126420000 | MOR | 416 | 18
+1557126420000 | ENG | 444 | 18
+1557126420000 | ENG | 117 | 18
+1557126420000 | MOR | 044 | 18
+1557126480000 | ENG | 117 | 3
+1557126840000 | GER | 523 | 18
+1557126900000 | GER | 523 | 6
+1557126900000 | GER | 445 | 6
 ```
-
-Again, the "null" values are an indication that "users_by_id" table wasn't fully populated at the time of the join.
-Work around this issue by starting the query before populating any of the topics.
 
 20. From the select, create a table from this query:
 
 ```ksql
-CREATE TABLE user_logins WITH (PARTITIONS=12) AS
-  SELECT CAST(windowStart() AS BIGINT), user_id, name, count(*) as count
-      FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id
-      WINDOW TUMBLING (SIZE 1 MINUTE)
-      GROUP BY user_id, name;
+CREATE TABLE radio_log_count
+  WITH (KAFKA_TOPIC='radio_log_count', VALUE_FORMAT = 'DELIMITED')
+  AS SELECT CAST(windowStart() AS BIGINT), type, name, count(*)
+        FROM radio_logs
+        WINDOW TUMBLING (SIZE 1 MINUTE)
+        GROUP BY type, name;
 ```
 
 21. Now, list the topics managed by kafka:
@@ -332,70 +243,18 @@ CREATE TABLE user_logins WITH (PARTITIONS=12) AS
 list topics;
 ```
 
-You should see the following. Notice the "USER_LOGINS" topic that has been created:
+You should see the following. Notice the "radio_log_count" topic that has been created:
 
 ```
- Kafka Topic | Registered | Partitions | Partition Replicas | Consumers | ConsumerGroups
------------------------------------------------------------------------------------------
- _schemas    | false      | 1          | 3                  | 0         | 0
- logins      | true       | 12         | 3                  | 12        | 1
- USER_LOGINS | true       | 12         | 1                  | 0         | 0
- users       | true       | 12         | 3                  | 12        | 1
------------------------------------------------------------------------------------------
+ Kafka Topic     | Registered | Partitions | Partition Replicas | Consumers | ConsumerGroups
+---------------------------------------------------------------------------------------------
+ _schemas        | false      | 1          | 3                  | 0         | 0
+ radio-logs      | true       | 12         | 3                  | 24        | 2
+ radio_log_count | true       | 4          | 1                  | 4         | 1
+---------------------------------------------------------------------------------------------
 ```
 
-22. Find those users which are logging in very often:
-
-```ksql
-SELECT * FROM user_logins WHERE count >= 5;
-```
-
-You should see something like the following:
-
-```
-14000 | 1|+|Jane Doe : Window{start=0 end=-} | 0 | 1 | Jane Doe | 5
-13000 | 2|+|John Smith : Window{start=0 end=-} | 0 | 2 | John Smith | 5
-```
-
-23. Without exiting the query, ssend more login data to the query:
-
-```sh
-./bin/kafka-console-producer.sh --broker-list kafka-1:19092 --topic logins --property "parse.key=true" --property "key.separator=:"
-```
-
-Copy the following data into the terminal, and then press Ctrl+d to exit back to the shell:
-
-```
-1:{"time": 210000, "user_id": 1}
-1:{"time": 211000, "user_id": 1}
-2:{"time": 212000, "user_id": 2}
-2:{"time": 213000, "user_id": 2}
-1:{"time": 214000, "user_id": 1}
-1:{"time": 21000, "user_id": 1}
-2:{"time": 22000, "user_id": 2}
-3:{"time": 23000, "user_id": 3}
-2:{"time": 24000, "user_id": 2}
-2:{"time": 25000, "user_id": 2}
-3:{"time": 26000, "user_id": 3}
-3:{"time": 27000, "user_id": 3}
-3:{"time": 28000, "user_id": 3}
-1:{"time": 29000, "user_id": 1}
-1:{"time": 210000, "user_id": 1}
-1:{"time": 211000, "user_id": 1}
-2:{"time": 212000, "user_id": 2}
-2:{"time": 213000, "user_id": 2}
-1:{"time": 214000, "user_id": 1}
-```
-
-You should see more login counts being incremented in KSQL.
-
-24. Send this query to a topic via a table, so that we can use kafka connect to export the results to a CSV formatted file:
-
-```ksql
-CREATE TABLE user_logins_delimited
-  WITH (KAFKA_TOPIC='user_logins_delimited', VALUE_FORMAT = 'DELIMITED')
-  AS SELECT * FROM user_logins WHERE count >= 5;
-```
+It has used a default value for the number of partitions.
 
 ## Exporting Kafka topics using Kafka Connect
 
@@ -405,21 +264,21 @@ CREATE TABLE user_logins_delimited
 ./bin/connect-standalone.sh /root/data/connect-standalone.properties /root/data/connect-file-sink-csv.properties &> kafka-connect-logs.txt &
 ```
 
-26. A new file "logins.csv" should be created and populated with the results of our "user_logins_delimited" table. Run the following to view its content:
+26. A new file "radio_log_count.csv" should be created and populated with the results of our "radio_log_count" table. Run the following to view its content:
 
 ```
-cat logins.csv
+cat radio_log_counts.csv
 ```
 
 You should see something like the following:
 
 ```
-0,1,Jane Doe,16
-180000,1,Jane Doe,18
-0,3,Mr. Meeseeks,16
-0,3,Mr. Meeseeks,20
-0,1,Jane Doe,18
-180000,1,Jane Doe,24
+1557134280000,GER,268,18
+1557134280000,MOR,050,18
+1557134280000,MOR,251,18
+1557134280000,MOR,524,18
+1557134340000,GER,268,9
+1557134340000,MOR,050,9
+1557134340000,MOR,251,12
+1557134340000,MOR,524,12
 ```
-
-If you send more data to the "logins" topic, more data will accumulate in the CSV file.
