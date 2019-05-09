@@ -12,6 +12,8 @@
 
 ## Running Kafka, KSQL, and the Schema Registry
 
+Shutdown any kafka brokers that you may have run from previous exercise, then follow the steps below.
+
 1. Bootstrap a 3-node kafka cluster, the KSQL server, and the Schema Registry with the following command:
 
 ```sh
@@ -33,23 +35,40 @@ docker-compose -f docker-compose.tools.yml run kafka-tools
 ./bin/kafka-topics.sh --bootstrap-server kafka-1:19092 --create --topic radio-logs --partitions 12 --replication-factor 3
 ```
 
-4. Populate the "radio-logs" topic by using the code from the streaming compute section in the Apache Kafka workshop.
-
-5. Populate the "logins" topic by using the kafka-console-producer:
-
-```sh
-./bin/kafka-console-producer.sh --broker-list kafka-1:19092 --topic logins --property "parse.key=true" --property "key.separator=:"
-```
+4. Populate the "radio-logs" topic by using the code from the streaming compute section in previous section of the Apache Kafka workshop.
 
 ## Starting KSQL and querying Kafka topics via tables and streams
 
-6. In a new terminal, start the KSQL CLI tool:
+5. In a new terminal, start the KSQL CLI tool:
 
 ```sh
 docker-compose -f docker-compose.ksql.yml run ksql
 ```
 
-7. At the KSQL command prompt, enter the following command to list the existing topics:
+You should see the following appear:
+
+```
+                  ===========================================
+                  =        _  __ _____  ____  _             =
+                  =       | |/ // ____|/ __ \| |            =
+                  =       | ' /| (___ | |  | | |            =
+                  =       |  <  \___ \| |  | | |            =
+                  =       | . \ ____) | |__| | |____        =
+                  =       |_|\_\_____/ \___\_\______|       =
+                  =                                         =
+                  =  Streaming SQL Engine for Apache Kafka® =
+                  ===========================================
+
+Copyright 2017-2018 Confluent Inc.
+
+CLI v5.2.1, Server v5.2.1 located at http://ksql-server:8088
+
+Having trouble? Type 'help' (case-insensitive) for a rundown of how things work!
+
+ksql>
+```
+
+6. At the KSQL command prompt, enter the following command to list the existing topics:
 
 ```ksql
 list topics;
@@ -65,7 +84,7 @@ You will see something like the following:
 -----------------------------------------------------------------------------------------
 ```
 
-8. View the messsages on the "radio-logs" topic, then hit Ctrl+C to get back to the prompt:
+7. View the messsages on the "radio-logs" topic:
 
 ```ksql
 print 'radio-logs' from beginning LIMIT 10;
@@ -87,14 +106,16 @@ Format:JSON
 {"ROWTIME":1557380525616,"ROWKEY":"122","time":1557125671157,"type":"MOR","name":"122","long":-74,"lat":-24,"content":[".----"]}
 ```
 
-11. Create a KSQL stream around the "radio-logins" topic:
+Hit Ctrl+c to get back to the prompt.
+
+8. Create a KSQL stream around the "radio-logins" topic:
 
 ```ksql
 CREATE STREAM radio_logs (time BIGINT, type VARCHAR, name VARCHAR, long VARCHAR, lat VARCHAR, content ARRAY<VARCHAR>)
   WITH (KAFKA_TOPIC='radio-logs', VALUE_FORMAT='JSON', KEY='name', TIMESTAMP='time');
 ```
 
-12. List the existing KSQL streams:
+9. List the existing KSQL streams:
 
 ```ksql
 show streams;
@@ -109,7 +130,7 @@ You should see the following:
 ------------------------------------
 ```
 
-14. View the details of the "users_by_id" table:
+10. View the details of the "radio_logs" stream:
 
 ```ksql
 describe radio_logs;
@@ -132,15 +153,14 @@ Name                 : RADIO_LOGS
 -------------------------------------
 ```
 
-16. View the content in the "radio_logs" stream, beginning with the earliest entry. The query can take a little time to return the initial results:
+11. View the content in the "radio_logs" stream, beginning with the earliest entry. The query can take a little time to return the initial results:
 
 ```ksql
 SET 'auto.offset.reset' = 'earliest';
 SELECT * from radio_logs LIMIT 10;
 ```
 
-The "earliest" setting tells KSQL that every query in this KSQL session should begin from the earliest
-offset on each topic, table, and stream.
+The "earliest" setting tells KSQL that every query in this KSQL session should begin from the earliest offset on each topic, table, and stream.
 
 You should see something like the following:
 
@@ -159,7 +179,7 @@ You should see something like the following:
 
 Press Ctrl+c to exit the query.
 
-17. Now, let's search for a specific entry in "radio_logs":
+12. Now, let's search for messages coming from a particular radio station:
 
 ```ksql
 SELECT * FROM radio_logs WHERE type='ENG' and name='324' LIMIT 10;
@@ -181,52 +201,57 @@ We should get multiple results, as follows:
 Limit Reached
 ```
 
-18. Now, limit the query to only those with content having at least 3 items:
+13. Now, limit the query to only those with content having at least 3 items:
 
 ```ksql
-select * from radio_logs WHERE content[2] IS NOT NULL limit 10;
+select * from radio_logs WHERE type='ENG' and name='324' and content[2] IS NOT NULL limit 10;
 ```
 
-You should see something like the following:
+After a while, you should see something like the following:
 
 ```
-1557126942198 | 423 | 1557126942198 | ENG | 423 | 76 | 25 | [one, three, six]
-1557126942223 | 423 | 1557126942223 | ENG | 423 | 76 | 25 | [one, three, nine]
-1557126942248 | 423 | 1557126942248 | ENG | 423 | 76 | 25 | [one, two, seven]
-1557126957782 | 423 | 1557126957782 | ENG | 423 | 76 | 25 | [one, five, nine]
-1557126957807 | 423 | 1557126957807 | ENG | 423 | 76 | 25 | [one, six, three]
-1557126957832 | 423 | 1557126957832 | ENG | 423 | 76 | 25 | [one, four, nine]
-1557126965396 | 423 | 1557126965396 | ENG | 423 | 76 | 25 | [one, five, eight]
-1557126965421 | 423 | 1557126965421 | ENG | 423 | 76 | 25 | [one, six, two]
-1557126965446 | 423 | 1557126965446 | ENG | 423 | 76 | 25 | [one, four, eight]
-1557126971643 | 423 | 1557126971643 | ENG | 423 | 76 | 25 | [one, three, five]
+1557132917575 | 324 | 1557132917575 | ENG | 324 | 27 | 9 | [one, zero, zero]
+1557132923187 | 324 | 1557132923187 | ENG | 324 | 27 | 9 | [one, zero, zero]
 Limit Reached
 ```
 
-19. Count how many messages each radio station is sending each minute:
+14. We can limit it even further to a specific timestamp:
+
+```ksql
+select * from radio_logs WHERE type='ENG' and name='324' and content[2] IS NOT NULL AND time = 1557132923187 limit 10;
+```
+
+Resulting in:
+
+```ksql
+1557132923187 | 324 | 1557132923187 | ENG | 324 | 27 | 9 | [one, zero, zero]
+```
+
+15. We can count how many messages each radio station is sending each minute:
 
 ```ksql
 SELECT CAST(windowStart() AS BIGINT), type, name, count(*)
     FROM radio_logs
     WINDOW TUMBLING (SIZE 1 MINUTE)
-    GROUP BY type, name;
+    GROUP BY type, name LIMIT 10;
 ```
 
-You may see something like the following:
+You should see something like the following:
 
 ```
-1557126840000 | MOR | 470 | 18
-1557126420000 | MOR | 416 | 18
-1557126420000 | ENG | 444 | 18
-1557126420000 | ENG | 117 | 18
-1557126420000 | MOR | 044 | 18
-1557126480000 | ENG | 117 | 3
-1557126840000 | GER | 523 | 18
-1557126900000 | GER | 523 | 6
-1557126900000 | GER | 445 | 6
+1557125640000 | MOR | 407 | 9
+1557125640000 | GER | 028 | 9
+1557125640000 | MOR | 437 | 9
+1557125640000 | GER | 169 | 9
+1557125640000 | ENG | 522 | 9
+1557125640000 | ENG | 261 | 9
+1557125640000 | ENG | 507 | 9
+1557125640000 | GER | 178 | 9
+1557125640000 | GER | 064 | 9
+1557125640000 | ENG | 279 | 9
 ```
 
-20. From the select, create a table from this query:
+16. From the select, create a table from this query, so that we can then export as a csv file:
 
 ```ksql
 CREATE TABLE radio_log_count
@@ -237,7 +262,7 @@ CREATE TABLE radio_log_count
         GROUP BY type, name;
 ```
 
-21. Now, list the topics managed by kafka:
+17. Now, list the topics managed by kafka:
 
 ```ksql
 list topics;
@@ -254,20 +279,20 @@ You should see the following. Notice the "radio_log_count" topic that has been c
 ---------------------------------------------------------------------------------------------
 ```
 
-It has used a default value for the number of partitions.
+Also notice that a default value has been assigned to the partition count.
 
 ## Exporting Kafka topics using Kafka Connect
 
-25. From the kafka-tools cli, start Kafka Connect in the background:
+18. From the kafka-tools cli, start Kafka Connect in the background:
 
 ```sh
 ./bin/connect-standalone.sh /root/data/connect-standalone.properties /root/data/connect-file-sink-csv.properties &> kafka-connect-logs.txt &
 ```
 
-26. A new file "radio_log_count.csv" should be created and populated with the results of our "radio_log_count" table. Run the following to view its content:
+19. A new file "radio_log_count.csv" should be created and populated with the results of our "radio_log_count" table. Run the following to view its content:
 
 ```
-cat radio_log_counts.csv
+cat radio_log_count.csv
 ```
 
 You should see something like the following:
