@@ -269,7 +269,7 @@ You should see something like the following:
 19. See how many times users are logging in within a time window:
 
 ```ksql
-SELECT CAST(windowStart() AS BIGINT), user_id, name, count(time)
+SELECT CAST(windowStart() AS BIGINT), user_id, name, count(*)
     FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id
     WINDOW TUMBLING (SIZE 1 SECONDS)
     GROUP BY user_id, name;
@@ -279,7 +279,7 @@ Create a table from this query:
 
 ```ksql
 CREATE TABLE user_logins WITH (PARTITIONS=12) AS
-  SELECT CAST(windowStart() AS BIGINT), user_id, name, count(time) as count
+  SELECT CAST(windowStart() AS BIGINT), user_id, name, count(*) as count
       FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id
       WINDOW TUMBLING (SIZE 1 SECONDS)
       GROUP BY user_id, name;
