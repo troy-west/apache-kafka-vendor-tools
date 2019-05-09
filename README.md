@@ -231,11 +231,15 @@ SELECT * from users_by_id;
 The "earliest" setting tells KSQL that every query in this KSQL session should begin from the earliest
 messages on each topic, table, and stream.
 
+Press Ctrl+c to exit the query.
+
 17. View the content in the "logins_by_id" stream, beginning with the earliest entry. The query can take a little time to return the initial results:
 
 ```ksql
 SELECT * from logins_by_id;
 ```
+
+Press Ctrl+c to exit the query.
 
 18. Now, join the "users_by_id" table with the "logins_by_id" stream, to see which users are logging in over time:
 
