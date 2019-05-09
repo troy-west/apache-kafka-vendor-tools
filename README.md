@@ -18,6 +18,8 @@
 docker-compose up
 ```
 
+## Creating and populating topics with the CLI tools
+
 2. In a new terminal, start the Kafka CLI tools, as follows. You will be dropped into a bash shell
 from where you can interact with the Kafka brokers:
 
@@ -70,6 +72,8 @@ Copy the following data into the terminal, and then press Ctrl+d to exit back to
 2:{"time": 13000, "user_id": 2}
 1:{"time": 14000, "user_id": 1}
 ```
+
+## Starting KSQL and querying Kafka topics via tables and streams
 
 6. In a new terminal, start the KSQL CLI tool:
 
@@ -309,13 +313,15 @@ CREATE TABLE user_logins_delimited
   AS SELECT * FROM user_logins WHERE count >= 5;
 ```
 
-From the kafka-tools cli, start kafka connect in the background:
+## Exporting Kafka topics using Kafka Connect
+
+22. From the kafka-tools cli, start Kafka Connect in the background:
 
 ```sh
 ./bin/connect-standalone.sh /root/data/connect-standalone.properties /root/data/connect-file-sink-csv.properties 2>&1 > kafka-connect-logs.txt &
 ```
 
-A new file "logins.csv" should be created and populated with the results of our "user_logins_delimited" table:
+A new file "logins.csv" should be created and populated with the results of our "user_logins_delimited" table. Run the following to view its content:
 
 ```
 cat logins.csv
@@ -328,11 +334,13 @@ You should see something like the following:
 1557365998000,2,John Smith,5
 ```
 
-Now if we pipe more logins into the original "logins" topic:
+23. Now if we pipe more logins into the original "logins" topic, by running the following:
 
 ```sh
 ./bin/kafka-console-producer.sh --broker-list kafka-1:19092 --topic logins --property "parse.key=true" --property "key.separator=:"
 ```
+
+Copy the following data into the terminal, and then press Ctrl+d to exit back to the shell:
 
 ```
 1:{"time": 210000, "user_id": 1}
@@ -363,129 +371,3 @@ cat logins.csv
 ```
 
 You will see that the logins.csv has accumulated more entries.
-
-
-
-
-
-
-
-WIP WIP WIP below here WIP WIP WIP
-WIP WIP WIP below here WIP WIP WIP
-WIP WIP WIP below here WIP WIP WIP
-WIP WIP WIP below here WIP WIP WIP
-WIP WIP WIP below here WIP WIP WIP
-WIP WIP WIP below here WIP WIP WIP
-WIP WIP WIP below here WIP WIP WIP
-
-# Schema registry
-
-```sh
-curl -s http://schema-registry:8081/subjects | jq .
-```
-
-[
-  "_confluent-ksql-default_query_CTAS_J_TIME_GROUPED_4-Aggregate-aggregate-changelog-value",
-  "J_TIME_GROUPED-value",
-  "J_AVRO-value",
-  "_confluent-ksql-default_query_CTAS_J_TIME_GROUPED2_5-Aggregate-aggregate-changelog-value",
-  "_confluent-ksql-default_query_CTAS_J_TIME_GROUPED_4-Aggregate-groupby-repartition-value",
-  "SMALL_NUMBERS-value",
-  "J_TIMESTAMPED-value",
-  "J_TIME_GROUPED2-value",
-  "_confluent-ksql-default_query_CTAS_J_TIME_GROUPED2_5-Aggregate-groupby-repartition-value"
-]
-
-```sh
-curl -s http://schema-registry:8081/subjects/J_TIMESTAMPED-value/versions/1 | jq '.schema | fromjson'
-```
-
-{
-  "type": "record",
-  "name": "KsqlDataSourceSchema",
-  "namespace": "io.confluent.ksql.avro_schemas",
-  "fields": [
-    {
-      "name": "TIME",
-      "type": [
-        "null",
-        "long"
-      ],
-      "default": null
-    },
-    {
-      "name": "NAME",
-      "type": [
-        "null",
-        "string"
-      ],
-      "default": null
-    },
-    {
-      "name": "NUMBER",
-      "type": [
-        "null",
-        "long"
-      ],
-      "default": null
-    }
-  ]
-}
-
-
-
-
-
-
-
-curl -s http://localhost:8083/connectors/local-file-sink-json | jq .
-
-{
-  "name": "local-file-sink-json",
-  "config": {
-    "connector.class": "org.apache.kafka.connect.file.FileStreamSinkConnector",
-    "file": "test.sink.csv",
-    "tasks.max": "1",
-    "topics": "csv-delim",
-    "name": "local-file-sink-json"
-  },
-  "tasks": [
-    {
-      "connector": "local-file-sink-json",
-      "task": 0
-    }
-  ],
-  "type": "sink"
-}
-
-
-
-
-# joins
-
-CREATE STREAM pageviews_transformed
-  WITH (TIMESTAMP='time',
-        PARTITIONS=5,
-        VALUE_FORMAT='JSON') AS
-  SELECT viewtime,
-         userid,
-         pageid,
-         time
-  FROM pageviews
-  PARTITION BY userid;
-
-CREATE TABLE users_5part
-    WITH (PARTITIONS=5) AS
-    SELECT * FROM USERS;
-
-CREATE STREAM pageviews_enriched AS
-  SELECT pv.viewtime,
-         pv.userid AS userid,
-         pv.pageid,
-         pv.timestring,
-         u.gender,
-         u.regionid,
-         u.interests,
-         u.contactinfo
-  FROM pageviews_transformed pv
-  LEFT JOIN users_5part u ON pv.userid = u.userid;
