@@ -14,7 +14,7 @@
 
 Shutdown any kafka brokers that you may have run from previous exercise, then follow the steps below.
 
-1. Bootstrap a 3-node kafka cluster, the KSQL server, and the Schema Registry with the following command:
+1. Bootstrap a 3-node Kafka cluster, the KSQL server, and the Schema Registry with the following command:
 
 ```sh
 docker-compose up
@@ -264,7 +264,7 @@ CREATE TABLE radio_log_count
 
 Creating a table with *AS SELECT* and *KAFKA_TOPIC* will allow us to send the table to a topic.
 
-17. Now, list the topics managed by kafka:
+17. Now, list the topics managed by Kafka:
 
 ```ksql
 list topics;
