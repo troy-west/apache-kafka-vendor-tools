@@ -108,9 +108,9 @@ You will see something like the following:
 
 ```
 Format:JSON
-{"ROWTIME":1557363960776,"ROWKEY":"2","id":2,"name":"John Smith"}
-{"ROWTIME":1557363960776,"ROWKEY":"3","id":3,"name":"Mr. Meeseeks"}
-{"ROWTIME":1557363960744,"ROWKEY":"1","id":1,"name":"Jane Doe"}
+{"ROWTIME":1557373993878,"ROWKEY":"1","id":1,"name":"Jane Doe","time":0}
+{"ROWTIME":1557373993897,"ROWKEY":"2","id":2,"name":"John Smith","time":0}
+{"ROWTIME":1557373993900,"ROWKEY":"3","id":3,"name":"Mr. Meeseeks","time":0}
 ```
 
 9. View the messages on the "logins" topic, then hit Ctrl+C to get back to the prompt:
@@ -231,6 +231,14 @@ SELECT * from users_by_id;
 The "earliest" setting tells KSQL that every query in this KSQL session should begin from the earliest
 offset on each topic, table, and stream.
 
+You should see something like the following:
+
+```
+1557375171795 | 2 | 2 | John Smith
+1557375171778 | 1 | 1 | Jane Doe
+1557375171796 | 3 | 3 | Mr. Meeseeks
+```
+
 Press Ctrl+c to exit the query.
 
 17. View the content in the "logins_by_id" stream, beginning with the earliest entry. The query can take a little time to return the initial results:
@@ -239,53 +247,86 @@ Press Ctrl+c to exit the query.
 SELECT * from logins_by_id;
 ```
 
+You should see something like the following:
+
+```
+2000 | 2 | 2000 | 2
+4000 | 2 | 4000 | 2
+5000 | 2 | 5000 | 2
+12000 | 2 | 12000 | 2
+13000 | 2 | 13000 | 2
+3000 | 3 | 3000 | 3
+6000 | 3 | 6000 | 3
+7000 | 3 | 7000 | 3
+8000 | 3 | 8000 | 3
+1000 | 1 | 1000 | 1
+9000 | 1 | 9000 | 1
+10000 | 1 | 10000 | 1
+11000 | 1 | 11000 | 1
+14000 | 1 | 14000 | 1
+```
+
 Press Ctrl+c to exit the query.
 
 18. Now, join the "users_by_id" table with the "logins_by_id" stream, to see which users are logging in over time:
 
 ```ksql
-SELECT time, user_id, name FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id;
+SELECT logins_by_id.time, user_id, name FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id;
 ```
 
 You should see something like the following:
 
 ```
+3000 | 3 | null
+6000 | 3 | null
+7000 | 3 | null
+8000 | 3 | null
 1000 | 1 | Jane Doe
 9000 | 1 | Jane Doe
 10000 | 1 | Jane Doe
 11000 | 1 | Jane Doe
 14000 | 1 | Jane Doe
-3000 | 3 | Mr. Meeseeks
-6000 | 3 | Mr. Meeseeks
-7000 | 3 | Mr. Meeseeks
-2000 | 2 | John Smith
-4000 | 2 | John Smith
-5000 | 2 | John Smith
-8000 | 3 | Mr. Meeseeks
-12000 | 2 | John Smith
-13000 | 2 | John Smith
+2000 | 2 | null
+4000 | 2 | null
+5000 | 2 | null
+12000 | 2 | null
+13000 | 2 | null
 ```
+
+The "null" values are an indication that "users_by_id" table wasn't fully populated at the time of the join.
+Work around this issue by starting the query before populating any of the topics.
 
 19. See how many times users are logging in within a time window:
 
 ```ksql
 SELECT CAST(windowStart() AS BIGINT), user_id, name, count(*)
     FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id
-    WINDOW TUMBLING (SIZE 1 SECONDS)
+    WINDOW TUMBLING (SIZE 1 MINUTE)
     GROUP BY user_id, name;
 ```
 
-Create a table from this query:
+You may see something like the following:
+
+```
+0 | 1 | Jane Doe | 5
+0 | 2 | John Smith | 5
+0 | 3 | null | 4
+```
+
+Again, the "null" values are an indication that "users_by_id" table wasn't fully populated at the time of the join.
+Work around this issue by starting the query before populating any of the topics.
+
+20. From the select, create a table from this query:
 
 ```ksql
 CREATE TABLE user_logins WITH (PARTITIONS=12) AS
   SELECT CAST(windowStart() AS BIGINT), user_id, name, count(*) as count
       FROM logins_by_id LEFT JOIN users_by_id ON logins_by_id.user_id = users_by_id.id
-      WINDOW TUMBLING (SIZE 1 SECONDS)
+      WINDOW TUMBLING (SIZE 1 MINUTE)
       GROUP BY user_id, name;
 ```
 
-20. Now, list the topics managed by kafka:
+21. Now, list the topics managed by kafka:
 
 ```ksql
 list topics;
@@ -303,42 +344,13 @@ You should see the following. Notice the "USER_LOGINS" topic that has been creat
 -----------------------------------------------------------------------------------------
 ```
 
-21. Find those users which are logging in very often:
+22. Find those users which are logging in very often:
 
 ```ksql
 SELECT * FROM user_logins WHERE count >= 5;
 ```
 
-Send this query to a topic via a table, so that we can use kafka connect to export the results to a CSV formatted file:
-
-```ksql
-CREATE TABLE user_logins_delimited
-  WITH (KAFKA_TOPIC='user_logins_delimited', VALUE_FORMAT = 'DELIMITED')
-  AS SELECT * FROM user_logins WHERE count >= 5;
-```
-
-## Exporting Kafka topics using Kafka Connect
-
-22. From the kafka-tools cli, start Kafka Connect in the background:
-
-```sh
-./bin/connect-standalone.sh /root/data/connect-standalone.properties /root/data/connect-file-sink-csv.properties 2>&1 > kafka-connect-logs.txt &
-```
-
-A new file "logins.csv" should be created and populated with the results of our "user_logins_delimited" table. Run the following to view its content:
-
-```
-cat logins.csv
-```
-
-You should see something like the following:
-
-```
-1557365998000,1,Jane Doe,5
-1557365998000,2,John Smith,5
-```
-
-23. Now if we pipe more logins into the original "logins" topic, by running the following:
+23. Without exiting the query, ssend more login data to the query:
 
 ```sh
 ./bin/kafka-console-producer.sh --broker-list kafka-1:19092 --topic logins --property "parse.key=true" --property "key.separator=:"
@@ -368,10 +380,35 @@ Copy the following data into the terminal, and then press Ctrl+d to exit back to
 1:{"time": 214000, "user_id": 1}
 ```
 
-And view the csv file again:
+You should see more login counts being incremented in KSQL.
+
+24. Send this query to a topic via a table, so that we can use kafka connect to export the results to a CSV formatted file:
+
+```ksql
+CREATE TABLE user_logins_delimited
+  WITH (KAFKA_TOPIC='user_logins_delimited', VALUE_FORMAT = 'DELIMITED')
+  AS SELECT * FROM user_logins WHERE count >= 5;
+```
+
+## Exporting Kafka topics using Kafka Connect
+
+25. From the kafka-tools cli, start Kafka Connect in the background:
+
+```sh
+./bin/connect-standalone.sh /root/data/connect-standalone.properties /root/data/connect-file-sink-csv.properties 2>&1 > kafka-connect-logs.txt &
+```
+
+26. A new file "logins.csv" should be created and populated with the results of our "user_logins_delimited" table. Run the following to view its content:
 
 ```
 cat logins.csv
 ```
 
-You will see that the logins.csv has accumulated more entries.
+You should see something like the following:
+
+```
+1557365998000,1,Jane Doe,5
+1557365998000,2,John Smith,5
+```
+
+If you send more data to the "logins" topic, more data will accumulate in the CSV file.
