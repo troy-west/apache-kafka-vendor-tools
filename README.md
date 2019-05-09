@@ -35,7 +35,7 @@ docker-compose -f docker-compose.tools.yml run kafka-tools
 ./bin/kafka-topics.sh --bootstrap-server kafka-1:19092 --create --topic radio-logs --partitions 12 --replication-factor 3
 ```
 
-4. Populate the "radio-logs" topic by using the code from the streaming compute section in previous section of the Apache Kafka workshop.
+4. Populate the "radio-logs" topic by using the code from the coding section of the Apache Kafka workshop.
 
 ## Starting KSQL and querying Kafka topics via tables and streams
 
