@@ -42,7 +42,7 @@ docker-compose -f docker-compose.tools.yml run kafka-tools
 
 Copy the following data into the terminal, and then press Ctrl+d to exit back to the shell:
 
-```json
+```
 1:{"id":1, "name":"Jane Doe"}
 2:{"id":2, "name":"John Smith"}
 3:{"id":3, "name":"Mr. Meeseeks"}
@@ -56,7 +56,7 @@ Copy the following data into the terminal, and then press Ctrl+d to exit back to
 
 Copy the following data into the terminal, and then press Ctrl+d to exit back to the shell:
 
-```json
+```
 1:{"time": 1000, "user_id": 1}
 2:{"time": 2000, "user_id": 2}
 3:{"time": 3000, "user_id": 3}
