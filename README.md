@@ -350,6 +350,13 @@ You should see the following. Notice the "USER_LOGINS" topic that has been creat
 SELECT * FROM user_logins WHERE count >= 5;
 ```
 
+You should see something like the following:
+
+```
+14000 | 1|+|Jane Doe : Window{start=0 end=-} | 0 | 1 | Jane Doe | 5
+13000 | 2|+|John Smith : Window{start=0 end=-} | 0 | 2 | John Smith | 5
+```
+
 23. Without exiting the query, ssend more login data to the query:
 
 ```sh
@@ -395,7 +402,7 @@ CREATE TABLE user_logins_delimited
 25. From the kafka-tools cli, start Kafka Connect in the background:
 
 ```sh
-./bin/connect-standalone.sh /root/data/connect-standalone.properties /root/data/connect-file-sink-csv.properties 2>&1 > kafka-connect-logs.txt &
+./bin/connect-standalone.sh /root/data/connect-standalone.properties /root/data/connect-file-sink-csv.properties &> kafka-connect-logs.txt &
 ```
 
 26. A new file "logins.csv" should be created and populated with the results of our "user_logins_delimited" table. Run the following to view its content:
@@ -407,8 +414,12 @@ cat logins.csv
 You should see something like the following:
 
 ```
-1557365998000,1,Jane Doe,5
-1557365998000,2,John Smith,5
+0,1,Jane Doe,16
+180000,1,Jane Doe,18
+0,3,Mr. Meeseeks,16
+0,3,Mr. Meeseeks,20
+0,1,Jane Doe,18
+180000,1,Jane Doe,24
 ```
 
 If you send more data to the "logins" topic, more data will accumulate in the CSV file.
