@@ -150,7 +150,7 @@ CREATE TABLE users_by_id (id BIGINT, name VARCHAR)
 
 ```ksql
 CREATE STREAM logins_by_id (time BIGINT, user_id VARCHAR)
-  WITH (KAFKA_TOPIC='logins', VALUE_FORMAT='JSON', KEY='user_id');
+  WITH (KAFKA_TOPIC='logins', VALUE_FORMAT='JSON', KEY='user_id', TIMESTAMP='time');
 ```
 
 12. List the existing KSQL tables:
