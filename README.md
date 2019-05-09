@@ -251,7 +251,7 @@ You should see something like the following:
 1557125640000 | ENG | 279 | 9
 ```
 
-16. From the select, create a table from this query, so that we can then export as a csv file:
+16. From the select, create a table from this query, so that we can then export this to a csv file:
 
 ```ksql
 CREATE TABLE radio_log_count
