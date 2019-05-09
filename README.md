@@ -229,7 +229,7 @@ SELECT * from users_by_id;
 ```
 
 The "earliest" setting tells KSQL that every query in this KSQL session should begin from the earliest
-messages on each topic, table, and stream.
+offset on each topic, table, and stream.
 
 Press Ctrl+c to exit the query.
 
