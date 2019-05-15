@@ -311,3 +311,21 @@ You should see something like the following:
 1557134340000,MOR,251,12
 1557134340000,MOR,524,12
 ```
+
+# Troubleshooting
+
+## Windows
+
+### Docker
+
+If you are having problems with docker similar to the following error messages, try restarting docker:
+
+```
+driver failed programming external connectivity on endpoint
+```
+
+or,
+
+```
+input/output error
+```
